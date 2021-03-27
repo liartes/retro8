@@ -25,6 +25,8 @@ namespace lua
     const void* _update60;
     const void* _draw;
 
+    void fetchGlobals();
+
   public:
     Code() : L(nullptr) { }
     ~Code();
@@ -36,10 +38,10 @@ namespace lua
     void initFromSource(const std::string& code);
     void callFunction(const char* name, int ret = 0);
 
-    bool hasUpdate() const { return _update != nullptr || _update60 != nullptr; }
-    bool hasDraw() const { return _draw != nullptr; }
-    bool require60fps() const { return _update60 != nullptr; }
-    bool hasInit() const { return _init != nullptr; }
+    bool hasUpdate() { fetchGlobals(); return _update != nullptr || _update60 != nullptr; }
+    bool hasDraw() { fetchGlobals(); return _draw != nullptr; }
+    bool require60fps() { fetchGlobals(); return _update60 != nullptr; }
+    bool hasInit() { fetchGlobals(); return _init != nullptr; }
 
     void init();
     void update();

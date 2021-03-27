@@ -1157,12 +1157,20 @@ void Code::initFromSource(const std::string& code)
   if (error)
     printError("lua_pcall on init");
 
+  fetchGlobals();
+}
 
+void Code::fetchGlobals()
+{
   lua_getglobal(L, "_update");
   if (lua_isfunction(L, -1))
   {
     _update = lua_topointer(L, -1);
     lua_pop(L, 1);
+  }
+  else
+  {
+    _update = NULL;
   }
 
   lua_getglobal(L, "_update60");
@@ -1172,6 +1180,10 @@ void Code::initFromSource(const std::string& code)
     _update60 = lua_topointer(L, -1);
     lua_pop(L, 1);
   }
+  else
+  {
+    _update60 = NULL;
+  }
 
   lua_getglobal(L, "_draw");
 
@@ -1180,6 +1192,10 @@ void Code::initFromSource(const std::string& code)
     _draw = lua_topointer(L, -1);
     lua_pop(L, 1);
   }
+  else
+  {
+    _draw = NULL;
+  }
 
   lua_getglobal(L, "_init");
 
@@ -1187,6 +1203,10 @@ void Code::initFromSource(const std::string& code)
   {
     _init = lua_topointer(L, -1);
     lua_pop(L, 1);
+  }
+  else
+  {
+    _init = NULL;
   }
 }
 
@@ -1201,6 +1221,7 @@ void Code::callFunction(const char* name, int ret)
 
 void Code::update()
 {
+  fetchGlobals();
   if (_update60)
     callFunction("_update60");
   else if (_update)
@@ -1209,12 +1230,14 @@ void Code::update()
 
 void Code::draw()
 {
+  fetchGlobals();
   if (_draw)
     callFunction("_draw");
 }
 
 void Code::init()
 {
+  fetchGlobals();
   if (_init)
     callFunction("_init");
 }

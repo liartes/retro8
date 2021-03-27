@@ -148,14 +148,8 @@ bool load_game(char* rom_name)
 		
 	machine.memory().backupCartridge();
 
-	if (machine.code().hasInit())
-	{
-		//_initFuture = std::async(std::launch::async, []() {
-		printf("Cartridge has _init() function, calling it.\n");
-		machine.code().init();
-		printf("_init() function completed execution..\n");
-		//});
-	}
+	machine.code().init();
+
 	return true;
 }
 
