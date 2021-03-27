@@ -359,3 +359,13 @@ void Machine::map(coord_t cx, coord_t cy, coord_t x, coord_t y, amount_t cw, amo
     }
   }
 }
+
+void Machine::setflip(void(*newflip)())
+{
+  _flip = newflip;
+}
+void Machine::flip()
+{
+  if (_flip)
+    _flip();
+}

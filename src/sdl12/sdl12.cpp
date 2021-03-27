@@ -22,6 +22,7 @@ uint16_t;
 std::future<void> _initFuture;
 
 uint32_t frameCounter = 0;
+uint32_t lastFrameTick = 0;
 
 constexpr int SAMPLE_RATE = 44100;
 
@@ -59,12 +60,60 @@ void deinit()
 }
 
 
+void flip_screen()
+{
+	int fps = machine.code().require60fps() ? 60 : 30;
+	auto* data = machine.memory().screenData();
+	auto* screenPalette = machine.memory().paletteAt(r8::gfx::SCREEN_PALETTE_INDEX);
+	auto output = static_cast<pixel_t*>(sdl_screen->pixels);
+
+	for (size_t i = 0; i < r8::gfx::BYTES_PER_SCREEN; ++i)
+	{
+		const r8::gfx::color_byte_t* pixels = data + i;
+		const auto rc1 = colorTable.get(screenPalette->get((pixels)->low()));
+		const auto rc2 = colorTable.get(screenPalette->get((pixels)->high()));
+
+		*(output) = rc1;
+		*((output)+1) = rc2;
+		(output) += 2;
+	}
+
+	#ifndef IPU_SCALING
+	SDL_SoftStretch(sdl_screen, NULL, real_screen, NULL);
+	SDL_Flip(real_screen);
+	#else
+	SDL_Flip(sdl_screen);
+	#endif
+	++frameCounter;
+
+	/* Of course this assumes that the actual screen refresh rate is 60 or close to it.
+	 * Most games are 30 FPS though. I'm not aware of any 60 fps games aside from one
+	 * which only works on Picolove. - Gameblabla */
+	#ifdef SDL_TRIPLEBUF
+	if (fps != 60) {
+	#endif
+	//SDL_Delay(1000.0/fps);
+	uint32_t now = SDL_GetTicks();
+	if (now - lastFrameTick < 1000.0/fps)
+		SDL_Delay(1000.0/fps - (now - lastFrameTick));
+	lastFrameTick = SDL_GetTicks();
+	//while((1000/fps) > SDL_GetTicks()-start)SDL_Delay((1000/fps)-(SDL_GetTicks()-start));
+	#ifdef SDL_TRIPLEBUF
+	}
+	#endif
+}
+
+
 bool load_game(char* rom_name)
 {
 	size_t sz = 0;
 	FILE* fp;
 	uint8_t* bdata;
+
 	input.reset();
+	machine.setflip(flip_screen);
+	machine.sound().init();
+	frameCounter = 0;
 	
 	if (strstr(rom_name, ".PNG") || strstr(rom_name, ".png"))
 	{
@@ -107,8 +156,6 @@ bool load_game(char* rom_name)
 		printf("_init() function completed execution..\n");
 		//});
 	}
-	machine.sound().init();
-	frameCounter = 0;
 	return true;
 }
 
@@ -125,7 +172,6 @@ void audio_callback(void* data, uint8_t* cbuffer, int length)
 uint_fast8_t retro_run()
 {
 	Uint32 start;
-	int fps = machine.code().require60fps() ? 60 : 30;
 	SDL_Event Event;
 
 	/* manage input */
@@ -174,52 +220,13 @@ uint_fast8_t retro_run()
 	}
 
 	input.tick();
+
+	machine.code().update();
+	machine.code().draw();
 	
-	/* if code is at 60fps or every 2 frames (30fps) */
-	//if (machine.code().require60fps() || frameCounter % 2 == 0)
-	//if (!_initFuture.valid() || _initFuture.wait_for(std::chrono::nanoseconds(0)) == std::future_status::ready)
-	{
-		/* call _update and _draw of PICO-8 code */
-		machine.code().update();
-		machine.code().draw();
+	flip_screen();
+	input.manageKeyRepeat();
 
-		auto* data = machine.memory().screenData();
-		auto* screenPalette = machine.memory().paletteAt(r8::gfx::SCREEN_PALETTE_INDEX);
-		auto output = static_cast<pixel_t*>(sdl_screen->pixels);
-
-		for (size_t i = 0; i < r8::gfx::BYTES_PER_SCREEN; ++i)
-		{
-			const r8::gfx::color_byte_t* pixels = data + i;
-			const auto rc1 = colorTable.get(screenPalette->get((pixels)->low()));
-			const auto rc2 = colorTable.get(screenPalette->get((pixels)->high()));
-
-			*(output) = rc1;
-			*((output)+1) = rc2;
-			(output) += 2;
-		}
-		input.manageKeyRepeat();
-	}
-
-	#ifndef IPU_SCALING
-	SDL_SoftStretch(sdl_screen, NULL, real_screen, NULL);
-	SDL_Flip(real_screen);
-	#else
-	SDL_Flip(sdl_screen);
-	#endif
-	++frameCounter;
-
-	/* Of course this assumes that the actual screen refresh rate is 60 or close to it.
-	 * Most games are 30 FPS though. I'm not aware of any 60 fps games aside from one
-	 * which only works on Picolove. - Gameblabla */
-	#ifdef SDL_TRIPLEBUF
-	if (fps != 60) {
-	#endif
-	start = SDL_GetTicks();
-	while((1000/fps) > SDL_GetTicks()-start) SDL_Delay((1000/fps)-(SDL_GetTicks()-start));
-	#ifdef SDL_TRIPLEBUF
-	}
-	#endif
-	
 	return 1;
 }
 
