@@ -69,19 +69,15 @@ bool load_game(char* rom_name)
 	if (strstr(rom_name, ".PNG") || strstr(rom_name, ".png"))
 	{
 		fp = fopen(rom_name, "rb");
-		if (fp)
-		{
-			fseek(fp, 0 , SEEK_END);
-			sz = ftell(fp);
-			fseek(fp, 0 , SEEK_SET);
-			bdata = (uint8_t*)malloc(sz);
-			fread(bdata, sz, 1, fp);
-			fclose(fp);
-		}
-		else
-		{
+		if (!fp)
 			return false;
-		}
+
+		fseek(fp, 0 , SEEK_END);
+		sz = ftell(fp);
+		fseek(fp, 0 , SEEK_SET);
+		bdata = (uint8_t*)malloc(sz);
+		fread(bdata, sz, 1, fp);
+		fclose(fp);
 		
 		std::vector<uint8_t> out;
 		unsigned long width, height;
@@ -266,10 +262,14 @@ int main(int argc, char* argv[])
 	machine.code().loadAPI();
 	input.setMachine(&machine);
 	
+	if (argc != 2) {
+		printf("Usage: %s GAME_ROM\n", argv[0]);
+		return 1;
+	}
 	res = load_game(argv[1]);
 	if (!res)
 	{
-		printf("Could not load game !\n");
+		printf("Could not load game '%s'!\n", argv[1]);
 		return 0;
 	}
 		
