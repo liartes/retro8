@@ -95,7 +95,7 @@ namespace retro8
       else
         addr = as<sprite_index_t>(address::TILE_MAP_HIGH) + x + y * gfx::TILE_MAP_WIDTH * sizeof(sprite_index_t);
 
-      assert((addr >= memory + address::TILE_MAP_LOW && addr <= memory + address::TILE_MAP_LOW * gfx::TILE_MAP_WIDTH * gfx::TILE_MAP_HEIGHT * sizeof(sprite_index_t)));
+      //assert((addr >= memory + address::TILE_MAP_LOW && addr <= memory + address::TILE_MAP_LOW * gfx::TILE_MAP_WIDTH * gfx::TILE_MAP_HEIGHT * sizeof(sprite_index_t)));
 
       return addr;
     }
