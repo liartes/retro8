@@ -289,7 +289,7 @@ lua_Number lua_strb2number(const char* s, char** endptr)
 #endif
 
 static const char *l_str2dloc (const char *s, lua_Number *result, int mode) {
-  char *endptr;
+  char *endptr = NULL;
 
   if (mode == 'b')
     *result = lua_strb2number(s, &endptr);

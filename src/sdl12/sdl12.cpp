@@ -33,6 +33,12 @@ r8::input::InputManager input;
 r8::gfx::ColorTable colorTable;
 int16_t* audioBuffer;
 
+#ifdef SDL_TRIPLEBUF
+#define SDL_FLAGS SDL_HWSURFACE | SDL_TRIPLEBUF
+#else
+#define SDL_FLAGS SDL_HWSURFACE | SDL_DOUBLEBUF
+#endif
+
 #ifndef IPU_SCALING
 SDL_Surface *real_screen;
 #endif
@@ -231,19 +237,21 @@ int main(int argc, char* argv[])
 	audioBuffer = new int16_t[SAMPLE_RATE * 2];
 	
 	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
+	SDL_ShowCursor(0);
 	#ifdef IPU_SCALING
-	sdl_screen = SDL_SetVideoMode(128, 128, sizeof(pixel_t) * 8, SDL_HWSURFACE
+	sdl_screen = SDL_SetVideoMode(128, 128, sizeof(pixel_t) * 8, SDL_FLAGS);
 	#else
 	sdl_screen = SDL_CreateRGBSurface(SDL_HWSURFACE, 128, 128, sizeof(pixel_t) * 8, 0,0,0,0);
-	real_screen = SDL_SetVideoMode(320, 240, sizeof(pixel_t) * 8, SDL_HWSURFACE
+	real_screen = SDL_SetVideoMode(320, 240, sizeof(pixel_t) * 8, SDL_FLAGS);
+	if (!real_screen)
+	{
+		real_screen = SDL_SetVideoMode(240, 160, sizeof(pixel_t) * 8, SDL_FLAGS);
+		if (!real_screen)
+		{
+			return 0;
+		}
+	}
 	#endif
-	#ifdef SDL_TRIPLEBUF
-	| SDL_TRIPLEBUF
-	#else
-	| SDL_DOUBLEBUF
-	#endif
-	 );
-	SDL_ShowCursor(0);
 	
 	SDL_AudioSpec wantSpec, spec;
 	wantSpec.freq = 44100;
