@@ -13,11 +13,7 @@
 
 namespace r8 = retro8;
 using pixel_t =
-#ifdef RS90
-uint8_t;
-#else
 uint16_t;
-#endif
 
 std::future<void> _initFuture;
 
