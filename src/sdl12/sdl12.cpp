@@ -10,12 +10,15 @@
 #include <stdint.h>
 #include <future>
 #include <SDL/SDL.h>
+// libmmenu
+#include <dlfcn.h>
+#include <mmenu.h>
 
 namespace r8 = retro8;
 using pixel_t =
 uint16_t;
 
-std::future<void> _initFuture;
+//std::future<void> _initFuture;
 
 uint32_t frameCounter = 0;
 uint32_t lastFrameTick = 0;
@@ -39,6 +42,11 @@ int16_t* audioBuffer;
 SDL_Surface *real_screen;
 #endif
 SDL_Surface *sdl_screen;
+SDL_Surface *scaled_screen;
+static SDL_Rect game_surface={40,0,240,240};
+
+void* mmenu;
+char* rom_path;
 
 struct ColorMapper
 {
@@ -54,6 +62,7 @@ uint32_t Platform::getTicks() { return SDL_GetTicks(); }
 void deinit()
 {
 	if (sdl_screen) SDL_FreeSurface(sdl_screen);
+	if (scaled_screen) SDL_FreeSurface(scaled_screen);
 #ifndef IPU_SCALING
 	if (real_screen) SDL_FreeSurface(real_screen);
 #endif
@@ -81,7 +90,8 @@ void flip_screen()
 	}
 
 	#ifndef IPU_SCALING
-	SDL_SoftStretch(sdl_screen, NULL, real_screen, NULL);
+	SDL_SoftStretch(sdl_screen, NULL, scaled_screen, NULL);
+	SDL_BlitSurface(scaled_screen, NULL,real_screen , &game_surface);
 	SDL_Flip(real_screen);
 	#else
 	SDL_Flip(sdl_screen);
@@ -208,7 +218,27 @@ uint_fast8_t retro_run()
 				input.manageKey(1, 5, Event.type == SDL_KEYDOWN);
 			break;
 			case SDLK_ESCAPE:
-				return 0;
+				mmenu = dlopen("libmmenu.so", RTLD_LAZY);
+
+								if (mmenu) {
+									ShowMenu_t ShowMenu = (ShowMenu_t) dlsym(mmenu, "ShowMenu");
+
+									SDL_PauseAudio(1);
+									MenuReturnStatus status = ShowMenu(rom_path, NULL,
+											real_screen, kMenuEventKeyDown);
+
+									if (status == kStatusExitGame) {
+										SDL_FillRect(real_screen, NULL, 0x000000);
+										SDL_Flip(real_screen);
+										return 0;
+									} else if (status == kStatusOpenMenu) {
+										return 0;
+									}
+									SDL_PauseAudio(0);
+								} else {
+									return 0;
+								}
+
 			break;
 			default:
 			break;
@@ -226,7 +256,6 @@ uint_fast8_t retro_run()
 	return 1;
 }
 
-  
 int main(int argc, char* argv[])
 {
 	int res = 0, while_res = 1;
@@ -238,6 +267,7 @@ int main(int argc, char* argv[])
 	sdl_screen = SDL_SetVideoMode(128, 128, sizeof(pixel_t) * 8, SDL_FLAGS);
 	#else
 	sdl_screen = SDL_CreateRGBSurface(SDL_HWSURFACE, 128, 128, sizeof(pixel_t) * 8, 0,0,0,0);
+	scaled_screen = SDL_CreateRGBSurface(SDL_HWSURFACE, 240, 240, sizeof(pixel_t) * 8, 0,0,0,0);
 	real_screen = SDL_SetVideoMode(320, 240, sizeof(pixel_t) * 8, SDL_FLAGS);
 	if (!real_screen)
 	{
@@ -271,7 +301,8 @@ int main(int argc, char* argv[])
 		printf("Usage: %s GAME_ROM\n", argv[0]);
 		return 1;
 	}
-	res = load_game(argv[1]);
+	rom_path = argv[1];
+	res = load_game(rom_path);
 	if (!res)
 	{
 		printf("Could not load game '%s'!\n", argv[1]);

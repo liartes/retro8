@@ -23,7 +23,7 @@
 
 #if PLATFORM != PLATFORM_LIBRETRO
 
-  #include "SDL.h"
+  #include "SDL/SDL.h"
   #define LOGD(x , ...) printf(x"\n", ## __VA_ARGS__)
 
   #if PLATFORM == PLATFORM_WIN32
