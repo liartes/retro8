@@ -1,12 +1,13 @@
 .PHONY: all clean info
 
-CXX := $(CROSS)g++
-CC := $(CROSS)gcc
+
+CC			:= /opt/trimui-toolchain/bin/arm-buildroot-linux-gnueabi-gcc
+CXX			:= /opt/trimui-toolchain/bin/arm-buildroot-linux-gnueabi-g++
 
 SYSROOT:= $(shell $(CXX) -print-sysroot)
-CXXFLAGS += $(shell $(SYSROOT)/usr/bin/sdl2-config --cflags)
-LDFLAGS += $(shell $(SYSROOT)/usr/bin/sdl2-config --libs)
-LDFLAGS += -lSDL2_image -L$(shell pwd) -flto
+CXXFLAGS += $(shell $(SYSROOT)/usr/bin/sdl-config --cflags)
+LDFLAGS += $(shell $(SYSROOT)/usr/bin/sdl-config --libs)
+LDFLAGS += -lSDL -L$(shell pwd) -flto
 
 DISABLED_WARNINGS += -Wno-unused-parameter -Wno-missing-field-initializers -Wno-sign-compare -Wno-parentheses -Wno-unused-variable -Wno-reorder
 CXXFLAGS += -g -O2 -W -Wall -Wextra -std=c++0x $(DISABLED_WARNINGS) -I../../src
@@ -25,7 +26,7 @@ EXECUTABLE:= ./retro8
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(BINARIES)
-	$(CXX) $(BINARIES) -o $@ $(LDFLAGS)
+	$(CXX) $(BINARIES) -o retro8 $^ $(LDFLAGS)
 	mkdir -p data
 
 #.cpp.o:

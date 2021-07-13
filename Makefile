@@ -22,7 +22,7 @@ else ifeq ($(PROFILE), APPLY)
 CFLAGS		+= -fprofile-use -fbranch-probabilities
 endif
 CXXFLAGS = $(CFLAGS)
-LDFLAGS     = -lc -lgcc -lstdc++ -lSDL -lasound -lSDL_image -lSDL_ttf -ldl -pthread -no-pie -Wl,--gc-sections -flto -s
+LDFLAGS     = -lc -lgcc -lstdc++ -lSDL -lasound -lSDL_image -lSDL_ttf -ldl -lpthread -no-pie -Wl,--gc-sections -flto -s
 
 # Rules to make executable
 $(PRGNAME): $(OBJS)  
