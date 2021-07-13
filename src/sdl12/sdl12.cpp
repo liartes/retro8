@@ -235,19 +235,26 @@ void print_string(const char *s, u16 fg_color, u16 bg_color, int x, int y) {
 		ShowChar(menuSurface, x, y, s[i], fg_color, bg_color);
 }
 
+void menu_Exit()
+{
+	SDL_FillRect(real_screen, NULL, 0x000000);
+	SDL_Flip(real_screen);
+	SDL_Quit();
+}
+
 void menu_ChangeSoundConfig() {
 	if (gui_EnableSound == 0) {
-		machine.sound().toggleSound(false);
-	} else {
 		machine.sound().toggleSound(true);
+	} else {
+		machine.sound().toggleSound(false);
 	}
 }
 
 void menu_ChangeMusicConfig() {
-	if (gui_EnableSound == 0) {
-		machine.sound().toggleMusic(false);
-	} else {
+	if (gui_EnableMusic == 0) {
 		machine.sound().toggleMusic(true);
+	} else {
+		machine.sound().toggleMusic(false);
 	}
 }
 
@@ -268,14 +275,14 @@ void menu_ChangeScreenConfig() {
 }
 
 MENUITEM gui_MainMenuItems[] = {
-		{ (const char *) "Fullscreen: ", &gui_Fullscreen, 1,
-				(const char **) &gui_YesNo, &menu_ChangeScreenConfig }, {
-				(const char *) "Music: ", &gui_EnableMusic, 1,
-				(const char **) &gui_YesNo, &menu_ChangeMusicConfig }, {
-				(const char *) "Sound Effect: ", &gui_EnableSound, 1,
-				(const char **) &gui_YesNo, &menu_ChangeSoundConfig } };
+		{ (const char *) "Fullscreen: ", &gui_Fullscreen, 1,(const char **) &gui_YesNo, &menu_ChangeScreenConfig },
+		{(const char *) "Music: ", &gui_EnableMusic, 1,(const char **) &gui_YesNo, &menu_ChangeMusicConfig },
+		{(const char *) "Sound Effect: ", &gui_EnableSound, 1,(const char **) &gui_YesNo, &menu_ChangeSoundConfig },
+		{(const char *)"Exit", 0, 0, 0, &menu_Exit}
 
-MENU gui_MainMenu = { 3, 0, (MENUITEM *) &gui_MainMenuItems };
+};
+
+MENU gui_MainMenu = { 4, 0, (MENUITEM *) &gui_MainMenuItems };
 
 #define color16(red, green, blue) ((red << 11) | (green << 5) | blue)
 
