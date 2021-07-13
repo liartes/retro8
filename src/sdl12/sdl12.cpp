@@ -597,7 +597,9 @@ uint_fast8_t retro_run() {
 				}
 				SDL_PauseAudio(0);
 			} else {
-				return 0;
+				menu_MainShow(&gui_MainMenu);
+				SDL_FillRect(real_screen, NULL, 0x000000);
+				SDL_Flip(real_screen);
 			}
 
 			break;
